@@ -54,7 +54,13 @@ export default function Products() {
           <tbody>
             {filtered.map((p) => (
               <tr key={p.id} className="border-t hover:bg-gray-50">
-                <td className="p-3">{p.name}</td>
+                <td className="p-3">
+                  {p.image_url
+                    ? <img src={p.image_url} alt={p.name} className="h-10 w-10 object-cover rounded inline-block mr-2" />
+                    : <span className="inline-block h-10 w-10 bg-gray-100 rounded mr-2 align-middle" />
+                  }
+                  {p.name}
+                </td>
                 <td className="p-3">{p.category_name ?? '-'}</td>
                 <td className={`p-3 font-bold ${p.stock <= p.alert_stock ? 'text-red-500' : ''}`}>
                   {p.stock}

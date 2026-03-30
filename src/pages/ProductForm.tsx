@@ -9,12 +9,16 @@ export default function ProductForm() {
   const isEdit = !!id;
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     category_id: 0,
     name: '',
     description: '',
     stock: 0,
     alert_stock: 10,
+    image_url: '',
   });
 
   useEffect(() => {
@@ -29,19 +33,46 @@ export default function ProductForm() {
             description: product.description,
             stock: product.stock,
             alert_stock: product.alert_stock,
+            image_url: product.image_url,
           });
+          if (product.image_url) setImagePreview(product.image_url);
         }
       });
     }
   }, [id]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isEdit) {
-      await api.updateProduct(Number(id), form);
-    } else {
-      await api.createProduct(form);
+    setUploading(true);
+
+    let image_url = form.image_url;
+
+    if (imageFile) {
+      const { data } = await api.getUploadUrl(imageFile.name, imageFile.type);
+      await fetch(data.url, {
+        method: 'PUT',
+        body: imageFile,
+        headers: { 'Content-Type': imageFile.type },
+      });
+      image_url = data.imageUrl;
     }
+
+    const payload = { ...form, image_url };
+
+    if (isEdit) {
+      await api.updateProduct(Number(id), payload);
+    } else {
+      await api.createProduct(payload);
+    }
+
+    setUploading(false);
     navigate('/products');
   };
 
@@ -87,6 +118,19 @@ export default function ProductForm() {
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium mb-1">商品画像</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="border rounded px-3 py-2 w-full"
+          />
+          {imagePreview && (
+            <img src={imagePreview} alt="プレビュー" className="mt-2 h-32 object-contain rounded border" />
+          )}
+        </div>
+
         {!isEdit && (
           <div>
             <label className="block text-sm font-medium mb-1">初期在庫数</label>
@@ -114,9 +158,10 @@ export default function ProductForm() {
         <div className="flex gap-3 mt-2">
           <button
             type="submit"
-            className="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800"
+            disabled={uploading}
+            className="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800 disabled:opacity-50"
           >
-            {isEdit ? '更新' : '登録'}
+            {uploading ? 'アップロード中...' : isEdit ? '更新' : '登録'}
           </button>
           <button
             type="button"

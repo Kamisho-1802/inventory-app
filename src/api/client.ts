@@ -49,4 +49,8 @@ export const api = {
   getStockHistories: () => client.get<StockHistory[]>('/stock-histories'),
   createStockHistory: (data: { product_id: number; type: 'in' | 'out'; quantity: number; note: string }) =>
     client.post('/stock-histories', data),
+
+  // 画像アップロード
+  getUploadUrl: (filename: string, contentType: string) =>
+    client.post<{ url: string; imageUrl: string }>('/upload-url', { filename, contentType }),
 };
