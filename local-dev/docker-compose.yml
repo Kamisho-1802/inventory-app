@@ -1,0 +1,28 @@
+name: inventory-app-local
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: inventory-db
+    # 3306 は別プロジェクト(laravel-db)が 0.0.0.0 で占有しており、
+    # Docker のポートアロケータが IP 指定を無視して衝突と判定するため 3307 に出す。
+    # server.mjs が 127.0.0.2:3306 -> 127.0.0.1:3307 の TCP プロキシを張るので、
+    # lambda-api/index.mjs は無変更（mysql2 のデフォルト 3306）のまま接続できる。
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: localdevpass
+      MYSQL_DATABASE: inventory
+      TZ: Asia/Tokyo
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - inventory-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-plocaldevpass"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  inventory-db-data:

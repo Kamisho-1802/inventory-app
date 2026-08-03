@@ -1,0 +1,16 @@
+{
+  "name": "inventory-app-local-dev",
+  "private": true,
+  "type": "module",
+  "description": "ローカル開発用のAPIサーバー。lambda-api/index.mjs をそのまま実行する。",
+  "scripts": {
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d --wait",
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
